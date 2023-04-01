@@ -1,0 +1,62 @@
+name: "Orgview Deployment to S3 and generate history files"
+
+on:
+  workflow_dispatch:
+    inputs: { }
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+
+jobs:
+  orgchart-deployment:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 100
+
+      - uses: marceloprado/has-changed-path@v1.0.1
+        id: changed-map
+        with:
+          paths: map/**
+
+      - name: Copy file
+        if: steps.changed-map.outputs.changed == 'true'
+        run: |
+          MAP_FOLDER="map/"
+          MAPS_FOLDER="_maps/"
+          FILE_NAME="data_section.md"
+          TODAY=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          NEW_FILE_NAME="${TODAY}-${FILE_NAME}"
+          cp "${MAP_FOLDER}${FILE_NAME}" "${MAPS_FOLDER}${NEW_FILE_NAME}"
+          echo -e "---\ntitle: 'Data Section'\ndate: '${TODAY}'\n---\n\n$(cat ${MAPS_FOLDER}${NEW_FILE_NAME})" > ${MAPS_FOLDER}${NEW_FILE_NAME}
+
+      - name: Commit changes
+        if: steps.changed-map.outputs.changed == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Add new file copy for the history with updated date"
+          branch: main
+
+      - name: Yarn install
+        run: |
+          yarn install --frozen-lockfile
+
+      - name: Run the tests
+        run: |
+          yarn test
+
+      - name: build the app
+        run: |
+          yarn build
