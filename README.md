@@ -2,6 +2,9 @@
 
 This is a Next.js project that reads in Markdown files from a given folder and uses the markmap library to visualize it as a mind map. The use case is to visualize the structure of your organization.d
 
+## Demo
+A demo can be found [here](https://orgchart-one.vercel.app/)
+
 ## Getting Started
 ### Prerequisites
 
